@@ -34,37 +34,16 @@ void test_semaphore_lock ()
     TEST_ASSERT_TRUE_MESSAGE(semaphoreBlock == false, "Semaphore creation incorrectly allowed (expected deadlock)");
 }
 
-void test_main_thread (void* pvParams) 
+void test_semaphore_give ()
 {
-    xSemaphoreTake(twostaphore, portMAX_DELAY);
-    if (counter < 100) {
-        printf("printing counter from %s, counter = %d", "main", counter);
-        counter++;
-    }
-
-    else
-        xSemaphoreGive(twostaphore); 
-}
-
-void test_side_thread (void* pvParams) 
-{
-    xSemaphoreTake(twostaphore, portMAX_DELAY);
-    if (counter < 100)
-        printf("printing counter from %s, counter = %d", "main", counter);    
-    else
-        xSemaphoreGive(twostaphore);
-}
-
-void test_threads_func () {
     counter = 0;
-    TaskHandle_t main, side;
-    twostaphore = xSemaphoreCreateCounting(1, 1);
-
-    xTaskCreate(test_main_thread, "TestMainThread",
-                MAIN_TASK_STACK_SIZE, NULL, MAIN_TASK_PRIORITY, &main);
-    xTaskCreate(test_side_thread, "TestSideThread",
-                SIDE_TASK_STACK_SIZE, NULL, SIDE_TASK_PRIORITY, &side);
-    //vTaskStartScheduler();
+    xSemaphoreTake(testaphore, portMAX_DELAY);
+    counter++;
+    xSemaphoreGive(testaphore);
+    bool semaphoreBlock = xSemaphoreTake(testaphore, portMAX_DELAY);
+    counter--;
+    xSemaphoreGive(testaphore);
+    TEST_ASSERT_TRUE_MESSAGE(counter == 0, "The semaphore did not give correctly");
 }
 
 
@@ -82,8 +61,7 @@ int main (void)
         printf("Start tests\n");
         UNITY_BEGIN();
         RUN_TEST(test_semaphore_lock);
-        RUN_TEST(test_threads_func);
-
+        RUN_TEST(test_semaphore_give);
         sleep_ms(5000);
         UNITY_END();
     }
