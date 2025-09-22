@@ -13,7 +13,7 @@ Tests semaphore ability to give after it has taken a resource, using counter var
 
 ### test_deadlock
 Tests for classic deadlock, where thread 1 locks resource A, looks for resource B
-                                     "   2   "      "     B,   "    "     "     A
+                                     thread 2 locks resource B, looks for resource A
 
 ### test_orphan
 Creates an orphaned lock, ensures that it is blocked
