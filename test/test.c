@@ -45,14 +45,14 @@ void test_semaphore_give ()
 }
 
 
-void deadlock_resource_one ( void *) {
+void deadlock_thread_one ( void *) {
     xSemaphoreTake(threestaphore, portMAX_DELAY);
     vTaskDelay(200); // Delay to create deadlock
 
     xSemaphoreTake(semafour, portMAX_DELAY);
 }
 
-void deadlock_resource_two ( void *) {
+void deadlock_thread_two ( void *) {
     xSemaphoreTake(semafour, portMAX_DELAY);
     vTaskDelay(200); // Delay to create deadlock
 
@@ -65,10 +65,10 @@ void test_deadlock( void ) {
     TaskHandle_t dl_one, dl_two;
     TaskStatus_t statusDetailOne, statusDetailTwo;
     
-    xTaskCreate(deadlock_resource_one, "DEADLOCK_TEST", MAIN_TASK_STACK_SIZE, NULL, 
+    xTaskCreate(deadlock_thread_one, "DEADLOCK_TEST", MAIN_TASK_STACK_SIZE, NULL, 
                             MAIN_TASK_PRIORITY, &dl_one);
 
-    xTaskCreate(deadlock_resource_two, "DEADLOCK_TESTTWO", SIDE_TASK_STACK_SIZE, NULL,
+    xTaskCreate(deadlock_thread_two, "DEADLOCK_TESTTWO", SIDE_TASK_STACK_SIZE, NULL,
                             SIDE_TASK_PRIORITY, &dl_two);
 
     vTaskDelay(100);
