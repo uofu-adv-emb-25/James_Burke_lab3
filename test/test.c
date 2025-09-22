@@ -46,6 +46,22 @@ void test_semaphore_give ()
     TEST_ASSERT_TRUE_MESSAGE(counter == 0, "The semaphore did not give correctly");
 }
 
+
+void deadlock_one ( void *) {
+    xSemaphoreTake(threestaphore, portMAX_DELAY);
+    vTaskDelay(200); // Delay to create deadlock
+
+    xSemaphoreTake(semafour,      portMAX_DELAY);
+}
+
+void deadlock_two ( void *) {
+    xSemaphoreTake(semafour, portMAX_DELAY);
+    vTaskDelay(200); // Delay to create deadlock
+
+    xSemaphoreTake(threestaphore, portMAX_DELAY);
+}
+
+
 void test_deadlock( void ) {
     TaskHandle_t dl_one, dl_two;
 
@@ -58,20 +74,18 @@ void test_deadlock( void ) {
                             SIDE_TASK_PRIORITY, &dl_two);
 
     vTaskDelay(100);
-    xTaskSuspend(deadlock_one);
-    xTaskSuspend(deadlock_two);
+    vTaskSuspend(dl_one);
+    vTaskSuspend(dl_two);
 
 
-    TaskStatus_t statusDetailOne;
-                    statusDetailTwo;
+    TaskStatus_t statusDetailOne, statusDetailTwo;
                     
-    vTaskGetInfo(&dl_one, &statusDetailOne, 
-                    pdTRUE, eInvalid);
-    vTaskGetInfo(&dl_two, &statusDetailOne
-                    pdTRUE, eInvalid);
+    vTaskGetInfo(dl_one, &statusDetailOne, pdTRUE, eInvalid);
+
+    vTaskGetInfo(dl_two, &statusDetailTwo, pdTRUE, eInvalid);
 
     eTaskState stateOne = statusDetailOne.eCurrentState;
-    eTaskState stateOne = statusDetailTwo.eCurrentState;
+    eTaskState stateTwo = statusDetailTwo.eCurrentState;
 
     printf("Deadlock expected and Task one is currently: ");
     printf("Deadlock expected and Task two is currently: ");
@@ -79,19 +93,6 @@ void test_deadlock( void ) {
     TEST_ASSERT_TRUE_MESSAGE(true, "Error: reached end of expected code");
 }
 
-void deadlock_one ( void ) {
-    xSemaphoreTake(threestaphore, portMAX_DELAY);
-    vTaskDelay(200); // Delay to create deadlock
-
-    xSemaphoreTake(semafour,      portMAX_DELAY);
-}
-
-void deadlock_two ( void ) {
-    xSemaphoreTake(semafour, portMAX_DELAY);
-    vTaskDelay(200); // Delay to create deadlock
-
-    xSemaphoreTake(threestaphore, portMAX_DELAY);
-}
 
 
 int main (void)
