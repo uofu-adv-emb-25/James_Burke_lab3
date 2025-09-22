@@ -105,6 +105,83 @@ void test_deadlock( void ) {
 }
 
 
+void orphaned_lock(void*)
+{
+    while (1) {
+        xSemaphoreTake(twostaphore, portMAX_DELAY);
+        counter++;
+        if (counter % 2) {
+            continue;
+        }
+        //printf("Count %d\n", counter);
+        xSemaphoreGive(twostaphore);
+    }
+}
+
+
+void test_orphan( void ) {
+
+    TaskHandle_t o_one;
+    TaskStatus_t statusDetailOne;
+    
+    xTaskCreate(orphaned_lock, "DEADLOCK_TEST", MAIN_TASK_STACK_SIZE, NULL, 
+                            MAIN_TASK_PRIORITY, &o_one);
+
+
+    vTaskDelay(100);
+
+    
+    vTaskGetInfo(o_one, &statusDetailOne, pdTRUE, eInvalid);
+    
+    eTaskState stateOne = statusDetailOne.eCurrentState;
+
+    TEST_ASSERT_TRUE_MESSAGE((int)stateOne == 2, "The orphaned lock thread should be blocked.");
+
+    vTaskSuspend(o_one);
+
+    vTaskDelete(o_one);
+
+}
+
+
+void orphaned_lock_fixed(void*)
+{
+    while (1) {
+        xSemaphoreTake(testaphore, portMAX_DELAY);
+        counter++;
+        if (counter % 2) {
+            xSemaphoreGive(testaphore);
+            continue;
+        }
+        //printf("Count %d\n", counter);
+        xSemaphoreGive(testaphore);
+    }
+}
+
+void test_orphan_fix( void ) {
+
+    TaskHandle_t o_one;
+    TaskStatus_t statusDetailOne;
+    
+    xTaskCreate(orphaned_lock_fixed, "DEADLOCK_TEST", MAIN_TASK_STACK_SIZE, NULL, 
+                            MAIN_TASK_PRIORITY, &o_one);
+
+
+    vTaskDelay(100);
+
+    
+    vTaskGetInfo(o_one, &statusDetailOne, pdTRUE, eInvalid);
+    
+    eTaskState stateOne = statusDetailOne.eCurrentState;
+    //printf("Orphaned lock fixed task state: %d\n", (int)stateOne);
+    TEST_ASSERT_TRUE_MESSAGE(((int)stateOne == 0) || ((int)stateOne == 1), "The fixed orphaned lock thread should be running or ready"); 
+
+    vTaskSuspend(o_one);
+
+    vTaskDelete(o_one);
+
+}
+
 void thread_testing(void *){
     while (1) {
         /*  uxMaxCount -- The maximum count that can be reached.
@@ -120,6 +197,9 @@ void thread_testing(void *){
         RUN_TEST(test_semaphore_lock);
         RUN_TEST(test_semaphore_give);
         RUN_TEST(test_deadlock);
+        RUN_TEST(test_orphan);
+        RUN_TEST(test_orphan_fix);
+        printf("All done!\n");
         sleep_ms(5000);
         UNITY_END();
     }
