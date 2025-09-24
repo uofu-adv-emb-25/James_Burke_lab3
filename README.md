@@ -19,4 +19,4 @@ Tests for classic deadlock, where thread 1 locks resource A, looks for resource 
 Creates an orphaned lock, ensures that it is blocked
 
 ### test_orphan_fix
-Tests fixing an orphaned lock by calling xSemaphoreGive() intermittently as the thread operates.
+Tests fixing an orphaned lock by calling xSemaphoreGive() intermittently as the thread operates. 
