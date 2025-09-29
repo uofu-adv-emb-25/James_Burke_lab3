@@ -22,26 +22,37 @@ void setUp(void) {}
 
 void tearDown(void) {}
 
+int looper(SemaphoreHandle_t sem, int* counter, const char *src, TickType_t delay) {
+    if(xSemaphoreTake(sem, delay)==pdFALSE){
+        return pdFALSE;
+    }
+    (*counter)++;
+    printf("hello world from %s! Count %d\n", src, *counter);
+    xSemaphoreGive(sem);
+    return pdTRUE;
+    
+}
+
 void test_semaphore_lock ()
 {
-    xSemaphoreTake(testaphore, portMAX_DELAY);
+    SemaphoreHandle_t semx = xSemaphoreCreateCounting(1, 1);
+    int counter = 0;
+    xSemaphoreTake(semx, portMAX_DELAY); // Lock the semaphore
+    int result = looper(semx, &counter, "test", 5);
 
-    bool semaphoreBlock = xSemaphoreTake(testaphore, 100); // Try to take the semaphore again without waiting for too long
-
-    TEST_ASSERT_TRUE_MESSAGE(semaphoreBlock == false, "Semaphore creation incorrectly allowed (expected deadlock)");
-    xSemaphoreGive(testaphore); 
+    TEST_ASSERT_EQUAL_INT(pdFALSE, result);
+    TEST_ASSERT_EQUAL_INT(0, counter);
 }
 
 void test_semaphore_give ()
 {
-    counter = 0;
-    xSemaphoreTake(testaphore, portMAX_DELAY);
-    counter++;
-    xSemaphoreGive(testaphore);
-    bool semaphoreBlock = xSemaphoreTake(testaphore, portMAX_DELAY);
-    counter--;
-    xSemaphoreGive(testaphore);
-    TEST_ASSERT_TRUE_MESSAGE(counter == 0, "The semaphore did not give correctly");
+    SemaphoreHandle_t semx = xSemaphoreCreateCounting(1, 1);
+    int counter = 0;
+
+    int result = looper(semx, &counter, "test", 5);
+
+    TEST_ASSERT_EQUAL_INT(pdTRUE, result);
+    TEST_ASSERT_EQUAL_INT(1, counter);
 }
 
 
